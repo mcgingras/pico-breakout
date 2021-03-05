@@ -3,10 +3,24 @@ version 29
 __lua__
 function _init()
  cls()
- ball_x=10
-	ball_dx=1
-	ball_y=30
-	ball_dy=1
+	mode="start"
+end
+
+function _update60()
+	if mode=="game" then update_game()
+ elseif mode=="start" then update_start()
+ else update_gameover()
+ end
+end
+
+function update_start()
+ if btn(5) then
+ 	startgame()
+ end
+end
+
+function startgame()
+	mode="game"
 	ball_r=2
 	ball_dr=1
 	
@@ -16,9 +30,19 @@ function _init()
 	pad_h=2
 	pad_dx=2.5
 	pad_c=7
+	
+	lives=3
+	points=0
+	serveball()
 end
 
-function _update60()
+function update_gameover()
+ if btn(5) then
+ 	startgame()
+ end
+end
+
+function update_game()
  local button_press=false
  local next_x,next_y
  
@@ -41,17 +65,18 @@ function _update60()
 	next_y = ball_y+ball_dy
 	
 	
-	if next_x > 127 or next_x < 0 then
+	if next_x > 124 or next_x < 3 then
 		next_x=mid(0,next_x,127)
 		ball_dx = -ball_dx
 		sfx(0)
 	end
 	
-	if next_y > 127 or next_y < 0 then
+	if next_y < 10 then
 		next_y=mid(0,next_y,127)
 		ball_dy = -ball_dy
 		sfx(0)
 	end
+	
 	
 	pad_c = 7
 	if ball_box(next_x, next_y, pad_x, pad_y, pad_w, pad_h) then
@@ -60,19 +85,64 @@ function _update60()
 		else
 		 ball_dy = -ball_dy
 		end
-		pad_c = 8
 		sfx(1) 
+		points+=1
 	end
 	
 	ball_x = next_x
 	ball_y = next_y
+	
+		-- hit the bottom, game ove
+	if next_y > 127 then
+	 sfx(2)
+	 lives-=1
+	 if lives<0 then
+	  gameover()
+	 else
+	  serveball()
+	 end
+	end
+end
+
+function serveball()
+ ball_x=10
+	ball_dx=1
+	ball_y=30
+	ball_dy=1
+end
+
+function gameover()
+ mode="gameover"
 end
 
 function _draw()
-	cls()
-	rectfill(0,0,127,127,1)
+ if mode=="game" then draw_game()
+ elseif mode=="start" then draw_start()
+ else draw_gameover()
+ end
+end
+
+function draw_start()
+	cls(0)
+	print("😐 breakout 😐", 35, 40, 7)
+	print("press ❎ to start", 30, 70,11)
+end
+
+function draw_gameover()
+ --cls()
+ rectfill(0,60,128,77,0)
+ print("game over",46,62,7)
+ print("press ❎ to restart",27,69,6) 
+end
+
+function draw_game()
+	cls(1)
 	circfill(ball_x, ball_y, ball_r, 10)
 	rectfill(pad_x, pad_y, pad_x+pad_w, pad_y+pad_h, pad_c)
+ 
+ rectfill(0,0,128,6,0)
+ print("lives:"..lives,1,1,7)
+ print("score:"..points,40,1,7)
 end
 
 function ball_box(nx,ny, box_x, box_y, box_w, box_h)
@@ -160,5 +230,6 @@ __gfx__
 00000000008888000088870000788800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000007007000070000000000700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __sfx__
-010100001836018360183501833018320183100d0000d0000d0000d0000d0000d0000d00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-010100002436024360243502433024320243100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+000100001836018360183501833018320183100d0000d0000d0000d0000d0000d0000d00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+000100002436024360243502433024320243100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00060000234501f4501d4501b450194501645013450114500e4500c45009450064500445002450000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
